@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+
+# Build artifacts
+.next
+out
+build
+
+# Generated types — overwritten by `npm run db:types`, not hand-edited
+src/types/database.ts
+
+# Public assets
+public
+
+# Lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Env files (formatting them adds noise on every change)
+.env
+.env.*
+
+# Markdown / docs — separate workflow if we ever opt those in
+*.md
+
+# Migrations are SQL, not JS — let Supabase own that style
+supabase/migrations

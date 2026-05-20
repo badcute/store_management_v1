@@ -1,0 +1,59 @@
+# Enforce LF line endings inside the git repo for all text files.
+# Prevents the "Prettier reformats everything" diff storm that happens
+# when Windows checkouts get CRLF on disk while .prettierrc.json sets
+# endOfLine: "lf". With this file in place, the repo's stored copy
+# stays LF on every platform; Prettier's LF output matches what git
+# tracks; `git diff` only shows real content changes.
+#
+# Per-OS handling:
+#   * text=auto      — git decides if a file is text by sniffing
+#   * eol=lf         — when text, force LF in the repo (and on Windows
+#                      checkout we also keep LF, since core.autocrlf
+#                      defers to .gitattributes)
+#
+# Binary asset extensions are explicitly marked so git never tries to
+# diff/normalize them.
+
+* text=auto eol=lf
+
+# ── Source ───────────────────────────────────────────────
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.mjs       text eol=lf
+*.cjs       text eol=lf
+*.json      text eol=lf
+*.css       text eol=lf
+*.scss      text eol=lf
+*.html      text eol=lf
+*.md        text eol=lf
+*.mdx       text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.sql       text eol=lf
+*.svg       text eol=lf
+
+# Shell / config files
+*.sh        text eol=lf
+*.env*      text eol=lf
+.gitignore  text eol=lf
+.gitattributes text eol=lf
+.prettierrc* text eol=lf
+.eslintrc*  text eol=lf
+
+# ── Binary assets ────────────────────────────────────────
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+*.pdf       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.mp4       binary
+*.mov       binary
+*.zip       binary
