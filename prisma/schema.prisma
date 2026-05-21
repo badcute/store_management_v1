@@ -1,0 +1,288 @@
+// Phone store ERP schema
+// All monetary values stored as Decimal with original currency code.
+// Conversion to W (main) happens on read using the latest CurrencyRate row.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum Currency {
+  W
+  U
+  Y
+}
+
+enum PhoneStatus {
+  AVAILABLE
+  SOLD
+  RESERVED
+  DEFECTIVE
+}
+
+enum SimStatus {
+  AVAILABLE
+  SOLD
+}
+
+enum PaymentDirection {
+  RECEIVED // from client to us
+  PAID     // from us to supplier
+}
+
+enum ItemType {
+  PHONE
+  SIM
+  ACCESSORY
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  name         String
+  passwordHash String
+  role         Role        @default(STAFF)
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  auditLogs    AuditLog[]
+  imports      Import[]
+  exports      Export[]
+  rateUpdates  CurrencyRate[]
+  payments     Payment[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // CREATE | UPDATE | DELETE | LOGIN | RATE_UPDATE | etc.
+  entity    String   // Phone | SimCard | Accessory | Import | Export | Client | Supplier | Payment | CurrencyRate | User
+  entityId  String?
+  details   String?  // JSON-stringified diff/notes
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model CurrencyRate {
+  id          String   @id @default(uuid())
+  code        Currency
+  // How many W per 1 unit of `code`. For W itself this is always 1.
+  rateToW     Decimal  @db.Decimal(18, 6)
+  effectiveAt DateTime @default(now())
+  updatedById String?
+  updatedBy   User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  notes       String?
+
+  @@index([code, effectiveAt])
+}
+
+// -------------------- INVENTORY --------------------
+
+model Phone {
+  id              String       @id @default(uuid())
+  model           String
+  imei            String       @unique
+  purchasePrice   Decimal      @db.Decimal(18, 2)
+  purchaseCurrency Currency
+  sellingPrice    Decimal?     @db.Decimal(18, 2)
+  sellingCurrency Currency?
+  status          PhoneStatus  @default(AVAILABLE)
+  notes           String?
+  supplierId      String?
+  supplier        Supplier?    @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  importItemId    String?      @unique
+  importItem      ImportItem?  @relation(fields: [importItemId], references: [id], onDelete: SetNull)
+  exportItem      ExportItem?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([model])
+  @@index([status])
+}
+
+model SimCard {
+  id              String      @id @default(uuid())
+  number          String      @unique
+  simType         String?
+  purchasePrice   Decimal     @db.Decimal(18, 2)
+  purchaseCurrency Currency
+  sellingPrice    Decimal?    @db.Decimal(18, 2)
+  sellingCurrency Currency?
+  status          SimStatus   @default(AVAILABLE)
+  notes           String?
+  supplierId      String?
+  supplier        Supplier?   @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  importItemId    String?     @unique
+  importItem      ImportItem? @relation(fields: [importItemId], references: [id], onDelete: SetNull)
+  exportItem      ExportItem?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([status])
+}
+
+model Accessory {
+  id                  String        @id @default(uuid())
+  name                String        @unique
+  countPerBox         Int           @default(1)
+  boxesInStock        Int           @default(0)
+  // Latest known prices; updated on import / manual edit.
+  purchasePricePerBox Decimal       @db.Decimal(18, 2)
+  purchaseCurrency    Currency
+  sellingPricePerBox  Decimal?      @db.Decimal(18, 2)
+  sellingCurrency     Currency?
+  notes               String?
+  importItems         ImportItem[]
+  exportItems         ExportItem[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([name])
+}
+
+// -------------------- IMPORT --------------------
+
+model Import {
+  id          String       @id @default(uuid())
+  supplierId  String?
+  supplier    Supplier?    @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  importDate  DateTime     @default(now())
+  notes       String?
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  items       ImportItem[]
+  payments    Payment[]
+  createdAt   DateTime     @default(now())
+
+  @@index([importDate])
+}
+
+model ImportItem {
+  id          String   @id @default(uuid())
+  importId    String
+  import      Import   @relation(fields: [importId], references: [id], onDelete: Cascade)
+  itemType    ItemType
+  // For phone/sim, this represents a single unit (qty=1) tied via Phone.importItemId / SimCard.importItemId.
+  // For accessory, qty = number of boxes added in this import.
+  quantity    Int      @default(1)
+  unitCost    Decimal  @db.Decimal(18, 2)
+  currency    Currency
+  // For accessory imports only
+  accessoryId String?
+  accessory   Accessory? @relation(fields: [accessoryId], references: [id], onDelete: SetNull)
+  // Reverse relations:
+  phone       Phone?
+  simCard     SimCard?
+
+  @@index([importId])
+}
+
+// -------------------- EXPORT / SALES --------------------
+
+model Export {
+  id          String       @id @default(uuid())
+  clientId    String?
+  client      Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  exportDate  DateTime     @default(now())
+  notes       String?
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  items       ExportItem[]
+  payments    Payment[]
+  createdAt   DateTime     @default(now())
+
+  @@index([exportDate])
+}
+
+model ExportItem {
+  id          String   @id @default(uuid())
+  exportId    String
+  export      Export   @relation(fields: [exportId], references: [id], onDelete: Cascade)
+  itemType    ItemType
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(18, 2)
+  currency    Currency
+  // Each export item points to exactly ONE of phone/sim/accessory (depending on itemType).
+  phoneId     String?  @unique
+  phone       Phone?   @relation(fields: [phoneId], references: [id], onDelete: SetNull)
+  simCardId   String?  @unique
+  simCard     SimCard? @relation(fields: [simCardId], references: [id], onDelete: SetNull)
+  accessoryId String?
+  accessory   Accessory? @relation(fields: [accessoryId], references: [id], onDelete: SetNull)
+
+  @@index([exportId])
+}
+
+// -------------------- CLIENTS & SUPPLIERS --------------------
+
+model Client {
+  id        String    @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  exports   Export[]
+  payments  Payment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([name])
+}
+
+model Supplier {
+  id        String    @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  imports   Import[]
+  phones    Phone[]
+  simCards  SimCard[]
+  payments  Payment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([name])
+}
+
+model Payment {
+  id          String           @id @default(uuid())
+  direction   PaymentDirection
+  amount      Decimal          @db.Decimal(18, 2)
+  currency    Currency
+  paymentDate DateTime         @default(now())
+  notes       String?
+  // Party (always set; auto-derived from import/export when those are set)
+  clientId    String?
+  client      Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  supplierId  String?
+  supplier    Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  // Optional link to a specific transaction (for per-invoice tracking)
+  importId    String?
+  import      Import?          @relation(fields: [importId], references: [id], onDelete: SetNull)
+  exportId    String?
+  export      Export?          @relation(fields: [exportId], references: [id], onDelete: SetNull)
+  recordedById String?
+  recordedBy  User?            @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now())
+
+  @@index([clientId])
+  @@index([supplierId])
+  @@index([importId])
+  @@index([exportId])
+  @@index([paymentDate])
+}

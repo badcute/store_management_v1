@@ -1,0 +1,244 @@
+@import 'tailwindcss';
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ---------- Design tokens (Sunset Orange + Rose on stone neutrals) ---------- */
+:root {
+  --background: 30 25% 98%;
+  --foreground: 24 10% 14%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 24 10% 14%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 24 10% 14%;
+
+  --primary: 21 90% 48%;
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 24 100% 96%;
+
+  --secondary: 25 15% 95%;
+  --secondary-foreground: 24 10% 14%;
+
+  --muted: 25 15% 95%;
+  --muted-foreground: 24 6% 45%;
+
+  --accent: 351 95% 95%;
+  --accent-foreground: 351 75% 35%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 158 64% 42%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 30 100% 12%;
+
+  --info: 351 83% 56%;
+  --info-foreground: 0 0% 100%;
+
+  --border: 25 15% 88%;
+  --input: 25 15% 88%;
+  --ring: 21 90% 48%;
+
+  --radius: 0.75rem;
+
+  --shadow-soft: 0 1px 2px 0 hsl(24 20% 50% / 0.06), 0 1px 3px -1px hsl(24 20% 50% / 0.05);
+  --shadow-md: 0 4px 12px -2px hsl(24 30% 40% / 0.1), 0 2px 4px -2px hsl(24 30% 40% / 0.05);
+  --shadow-elevated: 0 10px 30px -10px hsl(24 30% 40% / 0.18), 0 4px 8px -4px hsl(24 30% 40% / 0.1);
+}
+
+.dark {
+  --background: 24 14% 8%;
+  --foreground: 25 15% 96%;
+
+  --card: 24 12% 11%;
+  --card-foreground: 25 15% 96%;
+
+  --popover: 24 12% 11%;
+  --popover-foreground: 25 15% 96%;
+
+  --primary: 24 95% 60%;
+  --primary-foreground: 24 14% 8%;
+  --primary-soft: 24 50% 18%;
+
+  --secondary: 24 10% 18%;
+  --secondary-foreground: 25 15% 96%;
+
+  --muted: 24 10% 18%;
+  --muted-foreground: 24 8% 65%;
+
+  --accent: 351 50% 22%;
+  --accent-foreground: 351 90% 86%;
+
+  --destructive: 0 65% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 158 60% 50%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 92% 60%;
+  --warning-foreground: 30 100% 12%;
+
+  --info: 351 80% 62%;
+  --info-foreground: 0 0% 100%;
+
+  --border: 24 10% 22%;
+  --input: 24 10% 22%;
+  --ring: 24 95% 60%;
+}
+
+/* Map CSS variables -> Tailwind v4 theme tokens (bg-card, text-primary, border-input, etc.) */
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-soft: hsl(var(--primary-soft));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-elevated: var(--shadow-elevated);
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: hsl(var(--border));
+  }
+  html,
+  body {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+  body {
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1,
+      'ss01' 1;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .app-bg {
+    background:
+      radial-gradient(1200px 600px at 100% -10%, hsl(var(--primary) / 0.1), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, hsl(var(--info) / 0.08), transparent 60%), hsl(var(--background));
+  }
+  .surface {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-soft);
+  }
+  .surface-hover {
+    transition: box-shadow 200ms ease;
+  }
+  .surface-hover:hover {
+    box-shadow: var(--shadow-md);
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(351 83% 56%) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fade-in {
+  animation: fade-in 250ms ease-out both;
+}
+@utility animate-slide-up {
+  animation: slide-up 280ms ease-out both;
+}
+
+/* react-day-picker v10 base styles (selection ring uses --primary) */
+.rdp-root {
+  --rdp-accent-color: hsl(var(--primary));
+  --rdp-accent-background-color: hsl(var(--primary) / 0.12);
+  --rdp-day_button-border-radius: 0.5rem;
+  --rdp-selected-border: 2px solid hsl(var(--primary));
+  --rdp-today-color: hsl(var(--primary));
+}

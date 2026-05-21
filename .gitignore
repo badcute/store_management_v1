@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# v0.1 Ref
+/v0.1
+idea.md
+requirements.md
